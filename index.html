@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebFlow Business Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9f0;--primary:#4f46e5;--primary2:#3730a3;--danger:#dc2626;--warning:#d97706;--success:#059669;--shadow:0 8px 28px rgba(23,32,51,.07)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.app{display:flex;min-height:100vh}.sidebar{width:250px;background:#111827;color:#fff;padding:22px 14px;position:fixed;inset:0 auto 0 0;z-index:5}
+.brand{font-size:20px;font-weight:800;padding:8px 12px 22px}.brand span{color:#818cf8}.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:#cbd5e1;text-align:left;padding:12px 13px;border-radius:9px}.nav button:hover,.nav button.active{background:#252d3d;color:#fff}.main{margin-left:250px;width:calc(100% - 250px);padding:28px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.title h1{margin:0 0 5px;font-size:28px}.title p{margin:0;color:var(--muted)}.actions{display:flex;gap:9px}
+.btn{border:0;border-radius:9px;padding:10px 15px;font-weight:700}.btn.primary{background:var(--primary);color:#fff}.btn.secondary{background:#fff;border:1px solid var(--line);color:var(--text)}.btn.danger{background:#fee2e2;color:#991b1b}
+.page{display:none}.page.active{display:block}.grid{display:grid;gap:16px}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}.stat .label{color:var(--muted);font-size:13px}.stat .value{font-size:27px;font-weight:800;margin-top:6px}.stat .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.two{grid-template-columns:1.35fr 1fr}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.section-title h2{font-size:17px;margin:0}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap}.table th{color:var(--muted);font-weight:700}.badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800}.badge.green{background:#d1fae5;color:#047857}.badge.yellow{background:#fef3c7;color:#92400e}.badge.red{background:#fee2e2;color:#b91c1c}.badge.blue{background:#dbeafe;color:#1d4ed8}.empty{padding:28px;text-align:center;color:var(--muted)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.toolbar input,.toolbar select,.form input,.form select,.form textarea{border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 11px;outline:none}.toolbar input{min-width:230px}.form{display:grid;gap:13px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:6px}.field label{font-size:12px;font-weight:700;color:var(--muted)}.field.full{grid-column:1/-1}.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:20;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modal-box{background:#fff;border-radius:15px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:22px}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.modal-head h2{margin:0;font-size:19px}.x{border:0;background:#f1f5f9;border-radius:8px;width:34px;height:34px}.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:5px}
+.list{display:grid;gap:10px}.item{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;justify-content:space-between;gap:12px}.item strong{display:block}.item small{color:var(--muted)}
+.notice{padding:12px;border-radius:10px;background:#eef2ff;color:#3730a3;font-size:13px;margin-bottom:15px}
+#authScreen{position:fixed;inset:0;background:linear-gradient(135deg,#111827,#312e81);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}
+.auth-card{width:min(430px,100%);background:#fff;border-radius:18px;padding:30px;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+.auth-logo{font-size:24px;font-weight:900;margin-bottom:8px}.auth-logo span{color:#4f46e5}.auth-sub{color:#6b7280;margin:0 0 24px}.auth-form{display:grid;gap:14px}.auth-field{display:grid;gap:6px}.auth-field label{font-size:12px;font-weight:800;color:#475569}.auth-field input{border:1px solid #dbe1ea;border-radius:10px;padding:12px;outline:none}.auth-field input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.1)}#loginBtn{border:0;border-radius:10px;padding:12px;background:#4f46e5;color:#fff;font-weight:800}.auth-error{display:none;background:#fee2e2;color:#991b1b;border-radius:9px;padding:10px;font-size:13px}.auth-info{font-size:12px;color:#64748b;text-align:center;margin:2px 0 0}.user-chip{display:flex;align-items:center;gap:8px;color:#cbd5e1;font-size:12px;padding:12px 13px;border-top:1px solid #293244;margin-top:12px}.logout{width:100%;border:0;background:#374151;color:#fff;border-radius:9px;padding:9px;margin-top:2px;font-weight:700}
+@media(max-width:900px){.sidebar{width:70px;padding:15px 8px}.brand{font-size:0;text-align:center}.brand:after{content:"W";font-size:22px;color:#818cf8}.nav button{font-size:0;text-align:center}.nav button:before{content:"•";font-size:20px}.main{margin-left:70px;width:calc(100% - 70px);padding:18px}.stats{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media(max-width:560px){.stats,.form-grid{grid-template-columns:1fr}.top{align-items:flex-start;gap:10px;flex-direction:column}.main{padding:12px}.toolbar input{width:100%;min-width:0}}
+</style>
+</head>
+<body>
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">Web<span>Flow</span> Manager</div>
+    <p class="auth-sub">Sign in to your business management system.</p>
+    <form class="auth-form" onsubmit="signIn(event)">
+      <div class="auth-field"><label>Email</label><input id="authEmail" type="email" autocomplete="username" required placeholder="you@example.com"></div>
+      <div class="auth-field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" required placeholder="Your password"></div>
+      <div id="authError" class="auth-error"></div>
+      <button id="loginBtn" type="submit">Sign In</button>
+      <div class="auth-info">Your user accounts are managed in Supabase Authentication.</div>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="appShell" style="display:none">
+<aside class="sidebar">
+  <div class="brand">Web<span>Flow</span> Manager</div>
+  <div class="nav">
+    <button class="active" data-page="dashboard">Dashboard</button>
+    <button data-page="customers">Customers</button>
+    <button data-page="websites">Websites & Domains</button>
+    <button data-page="social">Social Media</button>
+    <button data-page="tasks">Tasks</button>
+    <button data-page="payments">Payments</button>
+    <button data-page="renewals">Renewals</button>
+    <button data-page="reports">Reports</button>
+    <button data-page="settings">Settings</button>
+  </div>
+  <div class="user-chip"><span id="userEmail">Not signed in</span></div>
+  <button class="logout" onclick="signOut()">Sign Out</button>
+</aside>
+
+<main class="main">
+<section id="dashboard" class="page active">
+ <div class="top"><div class="title"><h1>Dashboard</h1><p>Your business at a glance.</p></div><div class="actions"><button class="btn primary" onclick="openCustomer()">+ Customer</button><button class="btn secondary" onclick="openTask()">+ Task</button></div></div>
+ <div class="grid stats">
+  <div class="card stat"><div class="label">Customers</div><div class="value" id="sCustomers">0</div><div class="sub">Active customers</div></div>
+  <div class="card stat"><div class="label">Websites</div><div class="value" id="sWebsites">0</div><div class="sub">Tracked websites</div></div>
+  <div class="card stat"><div class="label">Social Clients</div><div class="value" id="sSocial">0</div><div class="sub">Social media clients</div></div>
+  <div class="card stat"><div class="label">Tasks Today</div><div class="value" id="sTasks">0</div><div class="sub" id="sOverdue">0 overdue</div></div>
+ </div>
+ <div style="height:16px"></div>
+ <div class="grid two">
+  <div class="card"><div class="section-title"><h2>Today's Work</h2><button class="btn secondary" onclick="showPage('tasks')">View all</button></div><div id="todayList" class="list"></div></div>
+  <div class="card"><div class="section-title"><h2>Upcoming Renewals</h2><button class="btn secondary" onclick="showPage('renewals')">View all</button></div><div id="renewalList" class="list"></div></div>
+ </div>
+</section>
+
+<section id="customers" class="page">
+ <div class="top"><div class="title"><h1>Customers</h1><p>Manage every customer and their services.</p></div><button class="btn primary" onclick="openCustomer()">+ Add Customer</button></div>
+ <div class="card"><div class="toolbar"><input id="customerSearch" placeholder="Search customers..." oninput="renderCustomers()"><select id="customerStatus" onchange="renderCustomers()"><option value="">All statuses</option><option>Active</option><option>Inactive</option></select></div><div class="table-wrap"><table class="table"><thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Services</th><th>Status</th><th>Actions</th></tr></thead><tbody id="customerTable"></tbody></table></div></div>
+</section>
+
+<section id="websites" class="page">
+ <div class="top"><div class="title"><h1>Websites & Domains</h1><p>Track domains, hosting and website status.</p></div><button class="btn primary" onclick="openWebsite()">+ Add Website</button></div>
+ <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Domain</th><th>Website</th><th>Domain Expiry</th><th>Hosting Expiry</th><th>Status</th><th>Actions</th></tr></thead><tbody id="websiteTable"></tbody></table></div></div>
+</section>
+
+<section id="social" class="page">
+ <div class="top"><div class="title"><h1>Social Media</h1><p>Manage social accounts and recurring content work.</p></div><button class="btn primary" onclick="openSocial()">+ Add Social Service</button></div>
+ <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Platforms</th><th>Posting</th><th>Assigned To</th><th>Status</th><th>Actions</th></tr></thead><tbody id="socialTable"></tbody></table></div></div>
+</section>
+
+<section id="tasks" class="page">
+ <div class="top"><div class="title"><h1>Tasks</h1><p>Everything that needs to be done.</p></div><button class="btn primary" onclick="openTask()">+ Add Task</button></div>
+ <div class="card"><div class="toolbar"><select id="taskFilter" onchange="renderTasks()"><option value="">All statuses</option><option>Pending</option><option>In Progress</option><option>Completed</option></select><select id="taskAssignee" onchange="renderTasks()"><option value="">Everyone</option><option>Me</option><option>Friend</option></select></div><div class="table-wrap"><table class="table"><thead><tr><th>Task</th><th>Customer</th><th>Due</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead><tbody id="taskTable"></tbody></table></div></div>
+</section>
+
+<section id="payments" class="page">
+ <div class="top"><div class="title"><h1>Payments</h1><p>Track customer billing and outstanding amounts.</p></div><button class="btn primary" onclick="openPayment()">+ Add Payment</button></div>
+ <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Service</th><th>Amount</th><th>Frequency</th><th>Next Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody id="paymentTable"></tbody></table></div></div>
+</section>
+
+<section id="renewals" class="page">
+ <div class="top"><div class="title"><h1>Renewals</h1><p>Domains, hosting and recurring services that need attention.</p></div></div>
+ <div class="notice">Renewal warnings are calculated automatically from the expiry dates you enter.</div>
+ <div class="card"><div class="table-wrap"><table class="table"><thead><tr><th>Customer</th><th>Type</th><th>Name</th><th>Expiry</th><th>Days Remaining</th><th>Status</th></tr></thead><tbody id="renewalTable"></tbody></table></div></div>
+</section>
+
+<section id="reports" class="page">
+ <div class="top"><div class="title"><h1>Reports</h1><p>Export your business data.</p></div></div>
+ <div class="grid stats">
+  <div class="card"><h3>Customers</h3><p style="color:var(--muted)">Export customer records.</p><button class="btn primary" onclick="exportCSV('customers')">Export CSV</button></div>
+  <div class="card"><h3>Websites</h3><p style="color:var(--muted)">Export domains and hosting.</p><button class="btn primary" onclick="exportCSV('websites')">Export CSV</button></div>
+  <div class="card"><h3>Tasks</h3><p style="color:var(--muted)">Export work history.</p><button class="btn primary" onclick="exportCSV('tasks')">Export CSV</button></div>
+  <div class="card"><h3>Payments</h3><p style="color:var(--muted)">Export payment records.</p><button class="btn primary" onclick="exportCSV('payments')">Export CSV</button></div>
+ </div>
+</section>
+
+<section id="settings" class="page">
+ <div class="top"><div class="title"><h1>Settings</h1><p>Business configuration and cloud connection.</p></div></div>
+ <div class="card">
+  <h3>Supabase Cloud</h3>
+  <p style="color:var(--muted)">Supabase Authentication is connected. Users you create under Supabase Authentication → Users can sign in here with their email and password.</p>
+  <div class="notice">Authentication is cloud-based and sessions persist on the device. The business records are still using local demo storage in this version; the next step is moving Customers, Websites, Social Media, Tasks, Payments and Renewals into Supabase tables so both users share the same live data.</div>
+ </div>
+</section>
+</main>
+</div>
+
+<div id="modal" class="modal"><div class="modal-box"><div class="modal-head"><h2 id="modalTitle">Add</h2><button class="x" onclick="closeModal()">✕</button></div><div id="modalBody"></div></div></div>
+
+<script>
+/* Supabase configuration: the browser-safe publishable key is used here.
+   Never put a Supabase service-role/secret key in this HTML file. */
+const SUPABASE_URL = 'https://zodrsgsetoqlvhaybqkh.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_SapAdKjHyO1IUhK4EL_ERQ_0C4kqh7u';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const KEY='webflow_business_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"customers":[],"websites":[],"social":[],"tasks":[],"payments":[]}');
+const save=()=>{localStorage.setItem(KEY,JSON.stringify(db));renderAll()};
+
+function setAuthError(message){
+  const box=document.getElementById('authError');
+  box.textContent=message||'';
+  box.style.display=message?'block':'none';
+}
+async function signIn(e){
+  e.preventDefault();
+  setAuthError('');
+  const btn=document.getElementById('loginBtn');
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  btn.disabled=true; btn.textContent='Signing in...';
+  try{
+    const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+    if(error) throw error;
+  }catch(err){
+    setAuthError(err.message||'Unable to sign in. Check your email and password.');
+    btn.disabled=false; btn.textContent='Sign In';
+  }
+}
+async function signOut(){
+  await supabaseClient.auth.signOut();
+}
+function showAuthenticated(user){
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appShell').style.display='flex';
+  document.getElementById('userEmail').textContent=user?.email||'Signed in';
+  renderAll();
+}
+function showSignedOut(){
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('authEmail').value='';
+  document.getElementById('authPassword').value='';
+  setAuthError('');
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=false; btn.textContent='Sign In';
+}
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+  if(session?.user) showAuthenticated(session.user);
+  else showSignedOut();
+});
+supabaseClient.auth.getSession().then(({data})=>{
+  if(data.session?.user) showAuthenticated(data.session.user);
+  else showSignedOut();
+});
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const today=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const customerName=id=>db.customers.find(x=>x.id===id)?.company||'—';
+const daysLeft=d=>{if(!d)return null;return Math.ceil((new Date(d+'T23:59:59')-new Date())/86400000)};
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));renderAll()}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function openModal(title,body){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modal').classList.add('show')}
+function closeModal(){document.getElementById('modal').classList.remove('show')}
+function customerOptions(){return db.customers.map(c=>`<option value="${c.id}">${esc(c.company)}</option>`).join('')}
+
+function openCustomer(id=''){
+ const c=db.customers.find(x=>x.id===id)||{};
+ openModal(id?'Edit Customer':'Add Customer',`<form class="form" onsubmit="saveCustomer(event,'${id}')"><div class="form-grid">
+ <div class="field"><label>Company / Customer</label><input name="company" required value="${esc(c.company)}"></div>
+ <div class="field"><label>Contact Person</label><input name="contact" value="${esc(c.contact)}"></div>
+ <div class="field"><label>Phone</label><input name="phone" value="${esc(c.phone)}"></div>
+ <div class="field"><label>Email</label><input type="email" name="email" value="${esc(c.email)}"></div>
+ <div class="field"><label>Address</label><input name="address" value="${esc(c.address)}"></div>
+ <div class="field"><label>Status</label><select name="status"><option ${c.status==='Active'||!c.status?'selected':''}>Active</option><option ${c.status==='Inactive'?'selected':''}>Inactive</option></select></div>
+ <div class="field"><label>Start Date</label><input type="date" name="startDate" value="${esc(c.startDate)}"></div>
+ <div class="field full"><label>Notes</label><textarea name="notes" rows="3">${esc(c.notes)}</textarea></div></div>
+ <div class="form-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Save Customer</button></div></form>`);
+}
+function saveCustomer(e,id){e.preventDefault();const f=new FormData(e.target);const obj=Object.fromEntries(f);if(id)Object.assign(db.customers.find(x=>x.id===id),obj);else db.customers.push({id:uid(),...obj});closeModal();save()}
+function del(type,id){if(confirm('Delete this record?')){db[type]=db[type].filter(x=>x.id!==id);save()}}
+function openWebsite(id=''){if(!db.customers.length)return alert('Add a customer first.');const w=db.websites.find(x=>x.id===id)||{};openModal(id?'Edit Website':'Add Website',`<form class="form" onsubmit="saveWebsite(event,'${id}')"><div class="form-grid">
+<div class="field"><label>Customer</label><select name="customerId" required>${customerOptions()}</select></div>
+<div class="field"><label>Domain</label><input name="domain" placeholder="example.com" value="${esc(w.domain)}" required></div>
+<div class="field"><label>Website URL</label><input name="url" placeholder="https://..." value="${esc(w.url)}"></div>
+<div class="field"><label>Domain Provider</label><input name="domainProvider" value="${esc(w.domainProvider)}"></div>
+<div class="field"><label>Domain Start</label><input type="date" name="domainStart" value="${esc(w.domainStart)}"></div>
+<div class="field"><label>Domain Expiry</label><input type="date" name="domainExpiry" value="${esc(w.domainExpiry)}"></div>
+<div class="field"><label>Hosting Provider</label><input name="hostingProvider" value="${esc(w.hostingProvider)}"></div>
+<div class="field"><label>Hosting Expiry</label><input type="date" name="hostingExpiry" value="${esc(w.hostingExpiry)}"></div>
+<div class="field"><label>SSL</label><select name="ssl"><option>Active</option><option>Needs attention</option><option>Not configured</option></select></div>
+<div class="field"><label>Status</label><select name="status"><option>Active</option><option>Under Development</option><option>Suspended</option></select></div>
+<div class="field full"><label>Notes</label><textarea name="notes" rows="3">${esc(w.notes)}</textarea></div></div>
+<div class="form-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Save Website</button></div></form>`);
+document.querySelector('[name=customerId]').value=w.customerId||db.customers[0].id;
+if(w.ssl)document.querySelector('[name=ssl]').value=w.ssl;if(w.status)document.querySelector('[name=status]').value=w.status}
+function saveWebsite(e,id){e.preventDefault();const f=new FormData(e.target),obj=Object.fromEntries(f);if(id)Object.assign(db.websites.find(x=>x.id===id),obj);else db.websites.push({id:uid(),...obj});closeModal();save()}
+
+function openSocial(id=''){if(!db.customers.length)return alert('Add a customer first.');const s=db.social.find(x=>x.id===id)||{};openModal(id?'Edit Social Service':'Add Social Service',`<form class="form" onsubmit="saveSocial(event,'${id}')"><div class="form-grid">
+<div class="field"><label>Customer</label><select name="customerId" required>${customerOptions()}</select></div>
+<div class="field"><label>Platforms</label><input name="platforms" placeholder="Instagram, Facebook" value="${esc(s.platforms)}" required></div>
+<div class="field"><label>Posting Frequency</label><select name="frequency"><option>1 post every day</option><option>3 posts per week</option><option>1 post per week</option><option>Custom</option></select></div>
+<div class="field"><label>Assigned To</label><select name="assigned"><option>Me</option><option>Friend</option></select></div>
+<div class="field"><label>Service Start</label><input type="date" name="start" value="${esc(s.start)}"></div>
+<div class="field"><label>Service End</label><input type="date" name="end" value="${esc(s.end)}"></div>
+<div class="field full"><label>Account Links / Notes</label><textarea name="notes" rows="3">${esc(s.notes)}</textarea></div></div>
+<div class="form-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Save Social Service</button></div></form>`);
+document.querySelector('[name=customerId]').value=s.customerId||db.customers[0].id;if(s.frequency)document.querySelector('[name=frequency]').value=s.frequency;if(s.assigned)document.querySelector('[name=assigned]').value=s.assigned}
+function saveSocial(e,id){e.preventDefault();const f=new FormData(e.target),obj=Object.fromEntries(f);if(id)Object.assign(db.social.find(x=>x.id===id),obj);else db.social.push({id:uid(),...obj});closeModal();save()}
+
+function openTask(id=''){const t=db.tasks.find(x=>x.id===id)||{};openModal(id?'Edit Task':'Add Task',`<form class="form" onsubmit="saveTask(event,'${id}')"><div class="form-grid">
+<div class="field full"><label>Task</label><input name="title" required value="${esc(t.title)}"></div>
+<div class="field"><label>Customer</label><select name="customerId"><option value="">General Business</option>${customerOptions()}</select></div>
+<div class="field"><label>Due Date</label><input type="date" name="due" value="${esc(t.due||today())}"></div>
+<div class="field"><label>Assigned To</label><select name="assigned"><option>Me</option><option>Friend</option></select></div>
+<div class="field"><label>Priority</label><select name="priority"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+<div class="field"><label>Status</label><select name="status"><option>Pending</option><option>In Progress</option><option>Completed</option></select></div>
+<div class="field full"><label>Notes</label><textarea name="notes" rows="3">${esc(t.notes)}</textarea></div></div>
+<div class="form-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Save Task</button></div></form>`);
+['customerId','assigned','priority','status'].forEach(n=>{if(t[n])document.querySelector(`[name=${n}]`).value=t[n]})}
+function saveTask(e,id){e.preventDefault();const f=new FormData(e.target),obj=Object.fromEntries(f);if(id)Object.assign(db.tasks.find(x=>x.id===id),obj);else db.tasks.push({id:uid(),...obj});closeModal();save()}
+
+function openPayment(id=''){if(!db.customers.length)return alert('Add a customer first.');const p=db.payments.find(x=>x.id===id)||{};openModal(id?'Edit Payment':'Add Payment',`<form class="form" onsubmit="savePayment(event,'${id}')"><div class="form-grid">
+<div class="field"><label>Customer</label><select name="customerId" required>${customerOptions()}</select></div>
+<div class="field"><label>Service</label><input name="service" placeholder="Social Media / Domain / Website" required value="${esc(p.service)}"></div>
+<div class="field"><label>Amount</label><input type="number" step="0.01" name="amount" value="${esc(p.amount)}"></div>
+<div class="field"><label>Frequency</label><select name="frequency"><option>Monthly</option><option>Yearly</option><option>One-time</option></select></div>
+<div class="field"><label>Payment Date</label><input type="date" name="paidDate" value="${esc(p.paidDate||today())}"></div>
+<div class="field"><label>Next Payment</label><input type="date" name="nextDate" value="${esc(p.nextDate)}"></div>
+<div class="field"><label>Status</label><select name="status"><option>Paid</option><option>Due</option><option>Overdue</option><option>Partially Paid</option></select></div>
+<div class="field"><label>Outstanding</label><input type="number" step="0.01" name="outstanding" value="${esc(p.outstanding||0)}"></div></div>
+<div class="form-actions"><button type="button" class="btn secondary" onclick="closeModal()">Cancel</button><button class="btn primary">Save Payment</button></div></form>`);
+document.querySelector('[name=customerId]').value=p.customerId||db.customers[0].id;if(p.frequency)document.querySelector('[name=frequency]').value=p.frequency;if(p.status)document.querySelector('[name=status]').value=p.status}
+function savePayment(e,id){e.preventDefault();const f=new FormData(e.target),obj=Object.fromEntries(f);if(id)Object.assign(db.payments.find(x=>x.id===id),obj);else db.payments.push({id:uid(),...obj});closeModal();save()}
+
+function renderCustomers(){const q=(document.getElementById('customerSearch')?.value||'').toLowerCase(),st=document.getElementById('customerStatus')?.value||'';const rows=db.customers.filter(c=>(!q||`${c.company} ${c.contact} ${c.email}`.toLowerCase().includes(q))&&(!st||c.status===st));document.getElementById('customerTable').innerHTML=rows.map(c=>{const services=[];if(db.websites.some(w=>w.customerId===c.id))services.push('Website');if(db.social.some(s=>s.customerId===c.id))services.push('Social');return `<tr><td><strong>${esc(c.company)}</strong></td><td>${esc(c.contact)}</td><td>${esc(c.phone)}</td><td>${esc(services.join(', ')||'—')}</td><td><span class="badge ${c.status==='Active'?'green':'red'}">${esc(c.status)}</span></td><td><button class="btn secondary" onclick="openCustomer('${c.id}')">Edit</button> <button class="btn danger" onclick="del('customers','${c.id}')">Delete</button></td></tr>`}).join('')||`<tr><td colspan="6"><div class="empty">No customers yet. Add your first customer.</div></td></tr>`}
+
+function renderWebsites(){document.getElementById('websiteTable').innerHTML=db.websites.map(w=>{const d=daysLeft(w.domainExpiry),h=daysLeft(w.hostingExpiry);return `<tr><td>${esc(customerName(w.customerId))}</td><td><strong>${esc(w.domain)}</strong></td><td>${esc(w.url||'—')}</td><td>${esc(w.domainExpiry||'—')} ${renewBadge(d)}</td><td>${esc(w.hostingExpiry||'—')} ${renewBadge(h)}</td><td><span class="badge green">${esc(w.status)}</span></td><td><button class="btn secondary" onclick="openWebsite('${w.id}')">Edit</button> <button class="btn danger" onclick="del('websites','${w.id}')">Delete</button></td></tr>`}).join('')||`<tr><td colspan="7"><div class="empty">No websites recorded.</div></td></tr>`}
+function renewBadge(d){if(d===null)return '';return d<0?`<span class="badge red">Expired</span>`:d<=30?`<span class="badge yellow">${d}d</span>`:`<span class="badge green">${d}d</span>`}
+function renderSocial(){document.getElementById('socialTable').innerHTML=db.social.map(s=>`<tr><td>${esc(customerName(s.customerId))}</td><td>${esc(s.platforms)}</td><td>${esc(s.frequency)}</td><td>${esc(s.assigned)}</td><td><span class="badge blue">Active</span></td><td><button class="btn secondary" onclick="openSocial('${s.id}')">Edit</button> <button class="btn danger" onclick="del('social','${s.id}')">Delete</button></td></tr>`).join('')||`<tr><td colspan="6"><div class="empty">No social-media services recorded.</div></td></tr>`}
+function renderTasks(){const f=document.getElementById('taskFilter')?.value||'',a=document.getElementById('taskAssignee')?.value||'';document.getElementById('taskTable').innerHTML=db.tasks.filter(t=>(!f||t.status===f)&&(!a||t.assigned===a)).sort((x,y)=>(x.due||'').localeCompare(y.due||'')).map(t=>`<tr><td><strong>${esc(t.title)}</strong></td><td>${esc(customerName(t.customerId))}</td><td>${esc(t.due||'—')}</td><td>${esc(t.assigned)}</td><td>${esc(t.priority)}</td><td><span class="badge ${t.status==='Completed'?'green':t.status==='In Progress'?'blue':'yellow'}">${esc(t.status)}</span></td><td><button class="btn secondary" onclick="openTask('${t.id}')">Edit</button> <button class="btn danger" onclick="del('tasks','${t.id}')">Delete</button></td></tr>`).join('')||`<tr><td colspan="7"><div class="empty">No tasks found.</div></td></tr>`}
+function renderPayments(){document.getElementById('paymentTable').innerHTML=db.payments.map(p=>`<tr><td>${esc(customerName(p.customerId))}</td><td>${esc(p.service)}</td><td>${esc(p.amount||0)}</td><td>${esc(p.frequency)}</td><td>${esc(p.nextDate||'—')}</td><td><span class="badge ${p.status==='Paid'?'green':p.status==='Overdue'?'red':'yellow'}">${esc(p.status)}</span></td><td><button class="btn secondary" onclick="openPayment('${p.id}')">Edit</button> <button class="btn danger" onclick="del('payments','${p.id}')">Delete</button></td></tr>`).join('')||`<tr><td colspan="7"><div class="empty">No payment records.</div></td></tr>`}
+function renderRenewals(){const list=[];db.websites.forEach(w=>{if(w.domainExpiry)list.push({c:customerName(w.customerId),type:'Domain',name:w.domain,date:w.domainExpiry}) ;if(w.hostingExpiry)list.push({c:customerName(w.customerId),type:'Hosting',name:w.hostingProvider||'Hosting',date:w.hostingExpiry})});document.getElementById('renewalTable').innerHTML=list.sort((a,b)=>a.date.localeCompare(b.date)).map(x=>{const d=daysLeft(x.date);return `<tr><td>${esc(x.c)}</td><td>${x.type}</td><td>${esc(x.name)}</td><td>${x.date}</td><td><strong>${d}</strong></td><td>${renewBadge(d)}</td></tr>`}).join('')||`<tr><td colspan="6"><div class="empty">No renewals recorded.</div></td></tr>`}
+function renderDashboard(){document.getElementById('sCustomers').textContent=db.customers.filter(c=>c.status!=='Inactive').length;document.getElementById('sWebsites').textContent=db.websites.length;document.getElementById('sSocial').textContent=db.social.length;const due=db.tasks.filter(t=>t.due===today()&&t.status!=='Completed').length,over=db.tasks.filter(t=>t.due&&t.due<today()&&t.status!=='Completed').length;document.getElementById('sTasks').textContent=due;document.getElementById('sOverdue').textContent=`${over} overdue`;document.getElementById('todayList').innerHTML=db.tasks.filter(t=>t.due===today()&&t.status!=='Completed').slice(0,8).map(t=>`<div class="item"><div><strong>${esc(t.title)}</strong><small>${esc(customerName(t.customerId))} • ${esc(t.assigned)}</small></div><span class="badge yellow">${esc(t.status)}</span></div>`).join('')||`<div class="empty">Nothing pending today 🎉</div>`;const rs=[];db.websites.forEach(w=>{if(w.domainExpiry)rs.push({c:customerName(w.customerId),n:w.domain,d:daysLeft(w.domainExpiry),type:'Domain'});if(w.hostingExpiry)rs.push({c:customerName(w.customerId),n:w.hostingProvider||'Hosting',d:daysLeft(w.hostingExpiry),type:'Hosting'})});document.getElementById('renewalList').innerHTML=rs.filter(x=>x.d<=60).sort((a,b)=>a.d-b.d).slice(0,7).map(x=>`<div class="item"><div><strong>${esc(x.n)}</strong><small>${esc(x.c)} • ${x.type}</small></div>${renewBadge(x.d)}</div>`).join('')||`<div class="empty">No renewals in the next 60 days.</div>`}
+function renderAll(){renderCustomers();renderWebsites();renderSocial();renderTasks();renderPayments();renderRenewals();renderDashboard()}
+function exportCSV(type){const data=db[type]||[];if(!data.length)return alert('Nothing to export.');const rows=data.map(x=>({...x,customer:x.customerId?customerName(x.customerId):undefined}));const keys=[...new Set(rows.flatMap(x=>Object.keys(x)))].filter(k=>k!=='id');const csv=[keys.join(','),...rows.map(x=>keys.map(k=>`"${String(x[k]??'').replace(/"/g,'""')}"`).join(','))].join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`${type}-report.csv`;a.click()}
+</script>
+</body>
+</html>
